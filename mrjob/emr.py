@@ -249,6 +249,8 @@ class EMRJobRunner(MRJobRunner):
         :param emr_endpoint: optional host to connect to when communicating with S3 (e.g. ``us-west-1.elasticmapreduce.amazonaws.com``). Default is to infer this from *aws_region*.
         :type emr_job_flow_id: str
         :param emr_job_flow_id: the ID of a persistent EMR job flow to run jobs in (normally we launch our own job). It's fine for other jobs to be using the job flow; we give our job's steps a unique ID.
+        :type fetch_output: bool
+        :param fetch_output: If False, don't copy final output to the local host. Default is True.
         :type num_ec2_instances: int
         :param num_ec2_instances: number of instances to start up. Default is ``1``.
         :type s3_endpoint: str
@@ -347,7 +349,7 @@ class EMRJobRunner(MRJobRunner):
             'bootstrap_scripts', 'check_emr_status_every', 'ec2_instance_type',
             'ec2_key_pair', 'ec2_key_pair_file', 'ec2_master_instance_type',
             'ec2_slave_instance_type', 'emr_endpoint', 'emr_job_flow_id',
-            'num_ec2_instances', 's3_endpoint', 's3_log_uri',
+            'fetch_output', 'num_ec2_instances', 's3_endpoint', 's3_log_uri',
             's3_scratch_uri', 's3_sync_wait_time', 'ssh_bin',
             'ssh_bind_ports', 'ssh_tunnel_is_open',
             'ssh_tunnel_to_job_tracker']
@@ -358,6 +360,7 @@ class EMRJobRunner(MRJobRunner):
         return combine_dicts(super(EMRJobRunner, cls)._default_opts(), {
             'check_emr_status_every': 30,
             'ec2_instance_type': 'm1.small',
+            'fetch_output': True,
             'num_ec2_instances': 1,
             's3_sync_wait_time': 5.0,
             'ssh_bin': 'ssh',
@@ -946,6 +949,10 @@ class EMRJobRunner(MRJobRunner):
             raise Exception(msg)
 
     def _stream_output(self):
+        if not self._opts['fetch_output']:
+            log.info('Suppressing fetch of final output from %s' % self._output_dir)
+            return
+
         log.info('Streaming final output from %s' % self._output_dir)
 
         # make sure the job had a chance to copy all our data to S3
