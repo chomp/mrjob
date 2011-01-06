@@ -740,7 +740,8 @@ class MRJob(object):
         self.emr_opt_group.add_option(
             '--emr-job-flow-id', dest='emr_job_flow_id', default=None,
             help='ID of an existing EMR job flow to use')
-
+        self.emr_opt_group.add_option(
+            '--fetch-output', dest='fetch_output', default=True)
     def add_passthrough_option(self, *args, **kwargs):
         """Function to create options which both the job runner
         and the job itself respect (we use this for protocols, for example).
